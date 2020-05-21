@@ -173,7 +173,7 @@ public class EncryptedEditorGUI extends JFrame
 			{
 				String input = JOptionPane.showInputDialog(panel, "Enter the filename: ");
 				manager.setFilePath(input);
-				textArea.setText(manager.getFileData());
+				textArea.setText(getData());
 				setTitle(manager.getFileName() + " - Encrypted Editor");
 				;
 			}
@@ -219,7 +219,7 @@ public class EncryptedEditorGUI extends JFrame
 						default:
 							manager.setFilePath(filePath);
 							manager.setMessage(textArea.getText());
-							manager.persist();
+							saveData();
 							setTitle(manager.getFileName() + " - Encrypted Editor");
 						}
 					}
@@ -227,7 +227,7 @@ public class EncryptedEditorGUI extends JFrame
 				} else
 				{
 					manager.setMessage(textArea.getText());
-					manager.persist();
+					saveData();
 				}
 			}
 		});
@@ -266,7 +266,7 @@ public class EncryptedEditorGUI extends JFrame
 					default:
 						manager.setFilePath(filePath);
 						manager.setMessage(textArea.getText());
-						manager.persist();
+						saveData();
 						setTitle(manager.getFileName() + " - Encrypted Editor");
 					}
 				}
@@ -395,5 +395,31 @@ public class EncryptedEditorGUI extends JFrame
 
 		helpMenu = new JMenu("Help");
 		helpMenu.add(aboutItem);
+	}
+	
+	private void saveData()
+	{
+		if (manager.isEncrypted())
+		{
+			int key = Integer.parseInt(JOptionPane.showInputDialog(panel, "Enter the key: "));
+			manager.writeEncryptedFile(key);
+		}
+		else
+		{
+			manager.writeFile();
+		}
+	}
+	
+	private String getData()
+	{
+		if (manager.isEncrypted())
+		{
+			int key = Integer.parseInt(JOptionPane.showInputDialog(panel, "Enter the key: "));
+			return manager.readEncryptedFile(key);
+		}
+		else
+		{
+			return manager.readFile();
+		}
 	}
 }
