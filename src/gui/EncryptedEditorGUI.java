@@ -1,13 +1,11 @@
 package gui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 
-import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -19,11 +17,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 
 import manager.EncryptedEditorManager;
 
@@ -33,10 +28,8 @@ import manager.EncryptedEditorManager;
  * @author kentp
  *
  */
-public class MainWindow extends JFrame
+public class EncryptedEditorGUI extends JFrame
 {
-	//test
-	
 	// general use
 	private JLabel label;
 	private JPanel panel;
@@ -81,13 +74,13 @@ public class MainWindow extends JFrame
 	private JMenu helpMenu;
 	private JMenuItem aboutItem;
 
-	public MainWindow()
+	public EncryptedEditorGUI()
 	{
 		// TODO: change to dark theme when encrypted and light theme when not
-		// changeTheme();
 
 		manager = new EncryptedEditorManager();
-		setTitle(manager.getFileName() + " - Encrypted Editor");
+		// originally the file will not have a name
+		setTitle("Untitled - Encrypted Editor");
 		setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		// center the window
@@ -96,61 +89,15 @@ public class MainWindow extends JFrame
 		buildPanel();
 		add(panel);
 		setVisible(true);
-		textArea.setText(manager.readFile());
-	}
-
-	private void changeTheme()
-	{
-		UIManager.put("control", new Color(128, 128, 128));
-		UIManager.put("info", new Color(128, 128, 128));
-		UIManager.put("nimbusBase", new Color(18, 30, 49));
-		UIManager.put("nimbusAlertYellow", new Color(248, 187, 0));
-		UIManager.put("nimbusDisabledText", new Color(128, 128, 128));
-		UIManager.put("nimbusFocus", new Color(115, 164, 209));
-		UIManager.put("nimbusGreen", new Color(176, 179, 50));
-		UIManager.put("nimbusInfoBlue", new Color(66, 139, 221));
-		UIManager.put("nimbusLightBackground", new Color(18, 30, 49));
-		UIManager.put("nimbusOrange", new Color(191, 98, 4));
-		UIManager.put("nimbusRed", new Color(169, 46, 34));
-		UIManager.put("nimbusSelectedText", new Color(255, 255, 255));
-		UIManager.put("nimbusSelectionBackground", new Color(104, 93, 156));
-		UIManager.put("text", new Color(230, 230, 230));
-		try
-		{
-			for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels())
-			{
-				if ("Nimbus".equals(info.getName()))
-				{
-					UIManager.setLookAndFeel(info.getClassName());
-					break;
-				}
-			}
-		} catch (ClassNotFoundException e)
-		{
-			e.printStackTrace();
-		} catch (InstantiationException e)
-		{
-			e.printStackTrace();
-		} catch (IllegalAccessException e)
-		{
-			e.printStackTrace();
-		} catch (UnsupportedLookAndFeelException e)
-		{
-			e.printStackTrace();
-		} catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-
 	}
 
 	private void buildPanel()
 	{
 		panel = new JPanel(new BorderLayout(1, 0));
 		panel.add(label, BorderLayout.NORTH);
-		// white space
+		// white space on west side of the window
 		panel.add(new JLabel(), BorderLayout.WEST);
-		textArea = new JTextArea(5, 2);
+		textArea = new JTextArea();
 		scroll = new JScrollPane(textArea);
 		panel.add(scroll);
 	}
@@ -184,39 +131,35 @@ public class MainWindow extends JFrame
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				// if there is a message pending and the message doesn't equal the manager's
-				// message
-				if (!textArea.getText().equals("") && !manager.getMessage().equals(textArea.getText()))
+				int option = -1;
+				if (!manager.getMessage().equals(textArea.getText()))
 				{
-					int option = JOptionPane.showConfirmDialog(panel,
-							"Do you want to save changes to " + manager.getFileName() + "?");
-
-					if (option == 0)
-					{
-						if (manager.getFileName().equals("Untitled"))
-						{
-							String fileName = JOptionPane.showInputDialog(panel, "Enter the filename: ");
-							manager.setFileName(fileName);
-							manager.setMessage(textArea.getText());
-							manager.saveFile();
-							JOptionPane.showMessageDialog(panel, "Save Successful");
-						} else
-						{
-							manager.setMessage(textArea.getText());
-							manager.saveFile();
-							JOptionPane.showMessageDialog(panel, "Saved changes");
-						}
-					}
+					option = JOptionPane.showConfirmDialog(panel, "Do you want to save changes?");
 				}
 
-				// reset fileName
-				manager.setFileName("");
-				// reset message
-				manager.setMessage("");
-				// reset text
-				textArea.setText("");
-				JOptionPane.showMessageDialog(panel, "New File Created");
+				switch (option)
+				{
+				//yes
+				case 0:
+					//TODO: save data
+					break;
+					
+				// no
+				case 1:
+				// cancel
+				case 2:
+
+					// reset values
+				default:
+					manager.setEncrypted(true);
+					manager.setFilePath("");
+					manager.setMessage("");
+					setTitle("Untitled - Encrypted Editor");
+					textArea.setText("");
+				}
+
 			}
+
 		});
 
 		openItem = new JMenuItem("Open");
@@ -228,58 +171,11 @@ public class MainWindow extends JFrame
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				// if there is a message pending and the message doesn't equal the manager's
-				// message
-				if (!textArea.getText().equals("") && !manager.getMessage().equals(textArea.getText()))
-				{
-					int option = JOptionPane.showConfirmDialog(panel,
-							"Do you want to save changes to " + manager.getFileName() + "?");
-
-					if (option == 0)
-					{
-						if (manager.getFileName().equals("Untitled"))
-						{
-							String fileName = JOptionPane.showInputDialog(panel, "Enter the filename: ");
-							manager.setFileName(fileName);
-							manager.setMessage(textArea.getText());
-							manager.saveFile();
-							JOptionPane.showMessageDialog(panel, "Save Successful");
-						} else
-						{
-							manager.setMessage(textArea.getText());
-							manager.saveFile();
-							JOptionPane.showMessageDialog(panel, "Saved changes");
-						}
-
-						// reset fileName
-						manager.setFileName("");
-						// reset message
-						manager.setMessage("");
-						// reset text
-						textArea.setText("");
-						JOptionPane.showMessageDialog(panel, "New File Created");
-					} else if (option == 1)
-					{
-						// reset fileName
-						manager.setFileName("");
-						// reset message
-						manager.setMessage("");
-						// reset text
-						textArea.setText("");
-						JOptionPane.showMessageDialog(panel, "New File Created");
-					}
-				} else
-				{
-					// reset fileName
-					manager.setFileName("");
-					// reset message
-					manager.setMessage("");
-					// reset text
-					textArea.setText("");
-					JOptionPane.showMessageDialog(panel, "New File Created");
-				}
-
-				JOptionPane.showMessageDialog(panel, "Open File");
+				String input = JOptionPane.showInputDialog(panel, "Enter the filename: ");
+				manager.setFilePath(input);
+				textArea.setText(manager.getFileData());
+				setTitle(manager.getFileName() + " - Encrypted Editor");
+				;
 			}
 		});
 
@@ -293,21 +189,46 @@ public class MainWindow extends JFrame
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				if (manager.getFileName().equals(""))
+				// if file doesn't exist currently
+				if (manager.getFilePath().equals(""))
 				{
-					String fileName = JOptionPane.showInputDialog(panel, "Enter the filename: ");
-					manager.setFileName(fileName);
-					manager.setMessage(textArea.getText());
-					manager.saveFile();
-					JOptionPane.showMessageDialog(panel, "Save Successful");
+					String input = JOptionPane.showInputDialog(panel, "Enter the filename: ");
+
+					if (input != null)
+					{
+						// eliminates illegal characters
+						String filePath = input.replaceAll("[\\\\/:*?\"<>|]", "");
+						int option = -1;
+
+						if (manager.fileExists(filePath))
+						{
+							option = JOptionPane.showConfirmDialog(panel,
+									filePath + " already exists.\nDo you want to replace it?");
+						}
+
+						switch (option)
+						{
+						// user presses 'no'
+						case 1:
+							// user presses 'cancel'
+						case 2:
+
+							break;
+
+						// continue
+						default:
+							manager.setFilePath(filePath);
+							manager.setMessage(textArea.getText());
+							manager.persist();
+							setTitle(manager.getFileName() + " - Encrypted Editor");
+						}
+					}
+
 				} else
 				{
 					manager.setMessage(textArea.getText());
-					manager.saveFile();
-					JOptionPane.showMessageDialog(panel, "Save Successful");
+					manager.persist();
 				}
-
-				// JOptionPane.showMessageDialog(panel, textArea.getText());
 			}
 		});
 
@@ -318,11 +239,38 @@ public class MainWindow extends JFrame
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				String fileName = JOptionPane.showInputDialog(panel, "Enter the filename: ");
-				manager.setFileName(fileName);
-				manager.setMessage(textArea.getText());
-				manager.saveFile();
-				JOptionPane.showMessageDialog(panel, "Save Successful");
+				String input = JOptionPane.showInputDialog(panel, "Enter the filename: ");
+
+				if (input != null)
+				{
+					// eliminates illegal characters
+					String filePath = input.replaceAll("[\\\\/:*?\"<>|]", "");
+					int option = -1;
+
+					if (manager.fileExists(filePath))
+					{
+						option = JOptionPane.showConfirmDialog(panel,
+								filePath + " already exists.\nDo you want to replace it?");
+					}
+
+					switch (option)
+					{
+					// user presses 'no'
+					case 1:
+						// user presses 'cancel'
+					case 2:
+
+						break;
+
+					// continue
+					default:
+						manager.setFilePath(filePath);
+						manager.setMessage(textArea.getText());
+						manager.persist();
+						setTitle(manager.getFileName() + " - Encrypted Editor");
+					}
+				}
+
 			}
 		});
 
@@ -386,6 +334,7 @@ public class MainWindow extends JFrame
 		encryptedMode = new JCheckBoxMenuItem("Encrypted Mode");
 		encryptedMode.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
 		encryptedMode.setSelected(true);
+		// By default, encrypted mode is on
 		label = new JLabel("Encrypted Mode: ON", SwingConstants.CENTER);
 		encryptedMode.addActionListener(new ActionListener()
 		{

@@ -1,56 +1,58 @@
 package manager;
 
-import java.util.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.util.Scanner;
+
+import javax.swing.JOptionPane;
 
 public class EncryptedEditorManager
 {
-	private boolean encrypt;
-	private String fileName;
+	private boolean encrypted;
 	private String message;
+	private String filePath;
 	
 	public EncryptedEditorManager()
 	{
-		encrypt = true;
-		fileName = "Untitled";
+		encrypted = true;
 		message = "";
+		filePath = "";
 	}
 
-	public void encryptFile()
+	private void encryptFile()
 	{
 		
 	}
 
-	public void decryptFile()
+	private String decryptFile()
 	{
-
+		return new String();
 	}
 	
-	public void saveFile()
+	private void saveFile()
 	{
-		FileWriter fWriter;
 		try
 		{
-			fWriter = new FileWriter(fileName);
-			PrintWriter pWriter = new PrintWriter(fWriter);
-			
-			pWriter.println(message);
-			pWriter.close();
+			PrintWriter pWriter = new PrintWriter(filePath);
 
-		} catch (IOException e)
+			pWriter.print(message);
+			pWriter.close();
+		} catch (FileNotFoundException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
-	public String readFile()
-	{
-		File file = new File(fileName);
+	private String readFile()
+	{	
+		File file = new File(filePath);
+		Scanner fileReader;
+		String fileData = "";
+		System.out.println("reading data from " + filePath);
 		try
 		{
-			Scanner fileReader = new Scanner(file);
-			String fileData = "";
+			fileReader = new Scanner(file);
 			
 			while(fileReader.hasNext())
 			{
@@ -58,45 +60,82 @@ public class EncryptedEditorManager
 				fileData += "\n";
 			}
 			fileReader.close();
-			
-			
-			return fileData;
 		} catch (FileNotFoundException e)
 		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
-		return "Error Occured";
+		
+		return fileData;
 	}
 	
-	public boolean isEncrypted()
+	public void persist()
 	{
-		return encrypt;
+		if (encrypted)
+		{
+			encryptFile();
+		}
+		else
+		{
+			saveFile();
+		}
 	}
 	
-	public void setEncrypted(boolean encryption)
+	public String getFileData()
 	{
-		encrypt = encryption;
+		String fileData;
+		if (encrypted)
+		{
+			fileData = decryptFile();
+		}
+		else
+		{
+			fileData = readFile();
+		}
+		
+		return fileData;
+	}
+	
+	public boolean fileExists(String fileName)
+	{
+		File file = new File(fileName);
+		return file.exists() ? true : false;
 	}
 	
 	public String getFileName()
 	{
-		return fileName;
+		return new File(filePath).getName();
 	}
 	
-	public void setFileName(String newFileName)
+	public boolean isEncrypted()
 	{
-		fileName = newFileName;
+		return encrypted;
+	}
+
+	public void setEncrypted(boolean encrypted)
+	{
+		this.encrypted = encrypted;
 	}
 	
 	public String getMessage()
 	{
 		return message;
 	}
-	
-	public void setMessage(String newMessage)
+
+	public void setMessage(String message)
 	{
-		message = newMessage;
+		this.message = message;
 	}
+
+	public String getFilePath()
+	{
+		return filePath;
+	}
+	
+	public void setFilePath(String filePath)
+	{
+		this.filePath = filePath;
+	}
+	
 }

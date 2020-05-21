@@ -1,6 +1,6 @@
 package application;
 
-import gui.MainWindow;
+import gui.EncryptedEditorGUI;
 
 /**
  * 
@@ -15,7 +15,7 @@ public class AppDriver
 	 */
 	public static void main(String[] args)
 	{
-		new MainWindow();
+		new EncryptedEditorGUI();
 	}
 
 }
