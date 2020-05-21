@@ -21,54 +21,45 @@ public class EncryptedEditorManager
 
 	public void writeEncryptedFile(int key)
 	{
+		String updatedMessage = message.replaceAll("\n", "%");
 		PrintWriter pWriter;
 		try
 		{
-			pWriter = new PrintWriter(filePath);
 			final String ALLOWED_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+			pWriter = new PrintWriter(filePath);
 			Random rand = new Random();
-			
-			int randCharIndex = 0, randNum, amountOfChar = 0;
-			String randomString;
-			boolean messageEncoded = false;
+	
+			int randCharIndex = 0, randNum = 0, amountOfChar = 0, position = 0;
+			String randomString = "";
+
 			do
-			{
-				// random number on left side of decoded message
+			{ // random number on left side of decoded message
 				randNum = rand.nextInt(ALLOWED_CHARS.length());
+
 				// reset random string line
 				randomString = "";
 
-				// generate random string line
-				while (randomString.length() < ALLOWED_CHARS.length())
+				// Generate Random Line
+				for (int i = 0; i < ALLOWED_CHARS.length(); i++)
 				{
-					randCharIndex = rand.nextInt(ALLOWED_CHARS.length());
-					randomString += ALLOWED_CHARS.charAt(randCharIndex);
-				}
-
-				StringBuilder encodedString = new StringBuilder(randomString);
-
-				// encode character in the line
-				if (randNum % key == 0)
-				{
-					encodedString.setCharAt(randNum, message.charAt(amountOfChar));
-					amountOfChar++;
+					if (randNum % key == 0 && i == randNum)
+					{
+						randomString += updatedMessage.charAt(amountOfChar);
+						amountOfChar++;
+					} else
+					{
+						randCharIndex = rand.nextInt(ALLOWED_CHARS.length());
+						randomString += ALLOWED_CHARS.charAt(randCharIndex);
+					}
 				}
 
 				// write data to file
-				pWriter.printf("%d\t%s", randNum, encodedString);
-				pWriter.println();
+				pWriter.printf("%d\t%s%n", randNum, randomString);
 
-				// checks if the entire message has been encoded
-				if (amountOfChar == message.length())
-				{
-					messageEncoded = true;
-				}
-
-				// keep looping while messageEncoded = false
-			} while (!messageEncoded);
+				// keep looping while the entire method isn't encoded
+			} while (amountOfChar < updatedMessage.length());
 
 			pWriter.close();
-			System.out.println("Generated message.");
 		} catch (FileNotFoundException e)
 		{
 			// TODO Auto-generated catch block
@@ -78,16 +69,17 @@ public class EncryptedEditorManager
 
 	public String readEncryptedFile(int key)
 	{
-
 		File file = new File(filePath);
 		// Creates a Scanner object that reads from the file object you created
 		Scanner fileReader;
+		String message = "";
 		try
 		{
 			fileReader = new Scanner(file);
 			// Read from the file:
 			// This will keep looping while there is data in the file. If it reaches the end
 			// of the file, it will exit out of the loop
+		
 			while (fileReader.hasNext())
 			{
 				// This is the number that is on the left side of the decoded message
@@ -98,9 +90,17 @@ public class EncryptedEditorManager
 				{
 					// This equals the character at the "num" value. It needs to be + 1 because it
 					// takes into account the tab spacing in the message
-					message += str.charAt(num + 1);
+					// if there is a newline character then message += "\n"
+					if (str.charAt(num + 1) == '%')
+					{
+						message += "\n";
+					}
+					else
+					{
+						message += str.charAt(num + 1);						
+					}
+					
 				}
-
 			}
 			fileReader.close();
 		} catch (FileNotFoundException e)
@@ -108,7 +108,6 @@ public class EncryptedEditorManager
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
 		return message;
 	}
 
