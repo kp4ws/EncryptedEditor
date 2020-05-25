@@ -9,17 +9,14 @@ import java.util.Scanner;
 public class EncryptedEditorManager
 {
 	private boolean encrypted;
-	private String message;
-	private String filePath;
 
 	public EncryptedEditorManager()
 	{
+		//by default, encrypted mode is turned on
 		encrypted = true;
-		message = "";
-		filePath = "";
 	}
 
-	public void writeEncryptedFile(int key)
+	public void writeEncryptedFile(int key, String message, String filePath)
 	{
 		String updatedMessage = message.replaceAll("\n", "%");
 		PrintWriter pWriter;
@@ -67,7 +64,7 @@ public class EncryptedEditorManager
 		}
 	}
 
-	public String readEncryptedFile(int key)
+	public String readEncryptedFile(int key, String filePath)
 	{
 		File file = new File(filePath);
 		// Creates a Scanner object that reads from the file object you created
@@ -111,7 +108,7 @@ public class EncryptedEditorManager
 		return message;
 	}
 
-	public void writeFile()
+	public void writeFile(String message, String filePath)
 	{
 		try
 		{
@@ -125,7 +122,7 @@ public class EncryptedEditorManager
 		}
 	}
 
-	public String readFile()
+	public String readFile(String filePath)
 	{
 		File file = new File(filePath);
 		Scanner fileReader;
@@ -150,9 +147,9 @@ public class EncryptedEditorManager
 		return fileData;
 	}
 
-	public boolean fileExists(String fileName)
+	public boolean fileExists(String filePath)
 	{
-		File file = new File(fileName);
+		File file = new File(filePath);
 		return file.exists() ? true : false;
 	}
 
@@ -166,29 +163,8 @@ public class EncryptedEditorManager
 		this.encrypted = encrypted;
 	}
 
-	public String getMessage()
-	{
-		return message;
-	}
-
-	public void setMessage(String message)
-	{
-		this.message = message;
-	}
-
-	public String getFileName()
+	public String getFileName(String filePath)
 	{
 		return new File(filePath).getName();
 	}
-
-	public String getFilePath()
-	{
-		return filePath;
-	}
-
-	public void setFilePath(String filePath)
-	{
-		this.filePath = filePath;
-	}
-
 }
