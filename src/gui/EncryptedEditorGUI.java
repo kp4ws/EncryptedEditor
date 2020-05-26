@@ -39,6 +39,7 @@ public class EncryptedEditorGUI extends JFrame
 	// file info
 	private String filePath;
 	private boolean fileChanged;
+	private boolean encrypted;
 
 	// general use
 	private JLabel label;
@@ -50,7 +51,8 @@ public class EncryptedEditorGUI extends JFrame
 
 	private EncryptedEditorManager manager;
 
-	private final int FONT_SIZE = 14;
+	private final String NEW_WINDOW_NAME = "Untitled - Encrypted Editor";
+	private final String WINDOOW_NAME_EXTENSION = " - Encrypted Editor";
 	private final int WINDOW_WIDTH = 800;
 	private final int WINDOW_HEIGHT = 600;
 
@@ -90,13 +92,19 @@ public class EncryptedEditorGUI extends JFrame
 		// TODO: change to dark theme when encrypted and light theme when not
 
 		manager = new EncryptedEditorManager();
+		encrypted = true;
+		filePath = "";
+		fileChanged = false;
+
 		// originally the file will not have a name
-		setTitle("Untitled - Encrypted Editor");
+		setTitle(NEW_WINDOW_NAME);
 		setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		// center the window
 		setLocationRelativeTo(null);
-		// setUIFont();
+
+		// TODO: setUIFont();
+
 		buildMenuBar();
 		buildPanel();
 		add(panel);
@@ -105,37 +113,7 @@ public class EncryptedEditorGUI extends JFrame
 
 	public void setUIFont()
 	{
-		UIManager.put("Button.font", FONT_SIZE);
-		UIManager.put("ToggleButton.font", FONT_SIZE);
-		UIManager.put("RadioButton.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("CheckBox.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("ColorChooser.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("ComboBox.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("Label.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("List.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("MenuBar.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("MenuItem.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("RadioButtonMenuItem.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("CheckBoxMenuItem.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("Menu.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("PopupMenu.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("OptionPane.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("Panel.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("ProgressBar.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("ScrollPane.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("Viewport.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("TabbedPane.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("Table.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("TableHeader.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("TextField.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("PasswordField.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("TextArea.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("TextPane.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("EditorPane.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("TitledBorder.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("ToolBar.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("ToolTip.font", FONT_SIZE/* font of your liking */);
-		UIManager.put("Tree.font", FONT_SIZE/* font of your liking */);
+
 	}
 
 	private void buildPanel()
@@ -164,7 +142,7 @@ public class EncryptedEditorGUI extends JFrame
 			@Override
 			public void changedUpdate(DocumentEvent e)
 			{
-				fileChanged = true;
+				// fileChanged = true;
 			}
 		});
 
@@ -212,7 +190,22 @@ public class EncryptedEditorGUI extends JFrame
 
 				// yes
 				case 0:
-					// TODO: save data
+					//TODO: save changes
+					/*
+					String input = JOptionPane.showInputDialog(panel, "Enter the filename: ")
+							.replaceAll("[\\\\/:*?\"<>|]", "");
+
+					if (input != null)
+					{
+						int option = -1;
+
+						if (manager.fileExists(filePath))
+						{
+							option = JOptionPane.showConfirmDialog(panel,
+									filePath + " already exists.\nDo you want to replace it?");
+						}
+					}
+					*/
 					break;
 
 				// cancel
@@ -224,10 +217,10 @@ public class EncryptedEditorGUI extends JFrame
 
 					// reset values
 				default:
-					manager.setEncrypted(true);
+					encrypted = true;
 					filePath = "";
 					textArea.setText("");
-					setTitle("Untitled - Encrypted Editor");
+					setTitle(NEW_WINDOW_NAME);
 					textArea.setText("");
 				}
 
@@ -244,10 +237,29 @@ public class EncryptedEditorGUI extends JFrame
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				filePath = JOptionPane.showInputDialog(panel, "Enter the filename: ");
-				textArea.setText(getData());
-				setTitle(manager.getFileName(filePath) + " - Encrypted Editor");
+				String input = JOptionPane.showInputDialog(panel, "Enter the filename: ");
 
+				if (input != null)
+				{
+					filePath = input;
+					if (manager.fileExists(filePath))
+					{
+						if (encrypted)
+						{
+							String key = JOptionPane.showInputDialog(panel, "");
+							textArea.setText(manager.readEncryptedFile(Integer.parseInt(key), filePath));
+						} else
+						{
+							textArea.setText(manager.readFile(input));
+						}
+
+						setTitle(manager.getFileName(filePath) + " - Encrypted Editor");
+					} else
+					{
+						JOptionPane.showMessageDialog(panel, "File not found. Check the file name and try again.");
+					}
+
+				}
 			}
 		});
 
@@ -291,16 +303,13 @@ public class EncryptedEditorGUI extends JFrame
 						// continue
 						default:
 							filePath = input;
-							saveData();
-
-							// change this into a method
-							// sasdfetTitle(filePath + " - Encrypted Editor");
+							save();
 						}
 					}
 
 				} else
 				{
-					saveData();
+					save();
 				}
 			}
 		});
@@ -338,8 +347,7 @@ public class EncryptedEditorGUI extends JFrame
 					// continue
 					default:
 						filePath = input;
-						saveData();
-						// setTitle(manager.getFileName() + " - Encrypted Editor");
+						save();
 					}
 				}
 
@@ -414,14 +422,14 @@ public class EncryptedEditorGUI extends JFrame
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				manager.setEncrypted(encryptedMode.isSelected());
-
-				if (manager.isEncrypted())
+				if (encrypted)
 				{
 					label.setText("Encrypted Mode: ON");
+					encrypted = true;
 				} else
 				{
 					label.setText("Encrypted Mode: OFF");
+					encrypted = false;
 				}
 			}
 		});
@@ -469,27 +477,22 @@ public class EncryptedEditorGUI extends JFrame
 		helpMenu.add(aboutItem);
 	}
 
-	private void saveData()
+	private void save()
 	{
-		if (manager.isEncrypted())
+		if (encrypted)
 		{
-			int key = Integer.parseInt(JOptionPane.showInputDialog(panel, "Enter the key: "));
-			manager.writeEncryptedFile(key, textArea.getText(), filePath);
+			String input = JOptionPane.showInputDialog(panel, "Enter the key: ");
+
+			if (input != null)
+			{
+				manager.writeEncryptedFile(Integer.parseInt(input), textArea.getText(), filePath);
+			}
+
 		} else
 		{
 			manager.writeFile(textArea.getText(), filePath);
 		}
-	}
 
-	private String getData()
-	{
-		if (manager.isEncrypted())
-		{
-			int key = Integer.parseInt(JOptionPane.showInputDialog(panel, "Enter the key: "));
-			return manager.readEncryptedFile(key, filePath);
-		} else
-		{
-			return manager.readFile(filePath);
-		}
+		setTitle(manager.getFileName(filePath) + WINDOOW_NAME_EXTENSION);
 	}
 }

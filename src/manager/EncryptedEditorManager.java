@@ -8,12 +8,9 @@ import java.util.Scanner;
 
 public class EncryptedEditorManager
 {
-	private boolean encrypted;
-
 	public EncryptedEditorManager()
 	{
-		//by default, encrypted mode is turned on
-		encrypted = true;
+		
 	}
 
 	public void writeEncryptedFile(int key, String message, String filePath)
@@ -149,18 +146,7 @@ public class EncryptedEditorManager
 
 	public boolean fileExists(String filePath)
 	{
-		File file = new File(filePath);
-		return file.exists() ? true : false;
-	}
-
-	public boolean isEncrypted()
-	{
-		return encrypted;
-	}
-
-	public void setEncrypted(boolean encrypted)
-	{
-		this.encrypted = encrypted;
+		return new File(filePath).exists() ? true : false;
 	}
 
 	public String getFileName(String filePath)
