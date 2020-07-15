@@ -1,4 +1,3 @@
 # EncryptedEditor
 A simple application that mimics the UI design of Microsoft's Notepad software.
-This software has the ability to encrypt messages.
-The user can choose to turn encryption mode on/off.
+This software has the ability to encrypt messages and the user can choose to turn encrpytion mode on or off.
