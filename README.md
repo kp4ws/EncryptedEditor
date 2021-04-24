@@ -4,6 +4,6 @@ This program mimics the UI design of Microsoft's Notepad software.
 This software has the ability to encrypt messages from the user.
 Within the Edit window, encryption mode can be toggled off.
 
-# Release Notes #
-## v1.0 - 2020-05-19 ##
+## Release Notes ##
+### v1.0 - 2020-05-19 ###
 Original release of the project.
