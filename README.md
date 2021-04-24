@@ -1,6 +1,5 @@
 # EncryptedEditor
-A simple text editor program using Java Swing.
-The purpose of this application is to give the user's the ability to encrypt their messages.
+A simple text editor program that allows the user to encrypt their messages.
 
 ### Release Notes ###
 ---
