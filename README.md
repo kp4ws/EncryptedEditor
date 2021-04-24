@@ -9,7 +9,7 @@ Within the Edit window, encryption mode can be toggled off.
 ### v1.0 - 2020-05-19 ###
 ---
 Original release of the project
----
+
 
 ### v1.0 - 2020-05-19 ###
 Fixed some stuffs
