@@ -6,10 +6,10 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.Enumeration;
+import java.rmi.server.Operation;
+import java.time.Year;
 
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -26,16 +26,22 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.plaf.FontUIResource;
 
-import manager.EncryptedEditorManager;
+import problemdomain.Window;
+import utility.WindowUtility;
+
+
+
 
 /**
- * MainWindow acts as the manager of the program
+ * GUIManager acts as the manager of the program and delegates work to the
+ * appropriate methods.
  * 
  * @author kentp
- *
+ * @version 1.1
  */
-public class EncryptedEditorGUI extends JFrame
+public final class GUIManager
 {
+	public enum Option {YES, NO, CANCEL}
 	// file info
 	private String filePath;
 	private boolean fileChanged;
@@ -47,14 +53,7 @@ public class EncryptedEditorGUI extends JFrame
 	private JTextArea textArea;
 	private JScrollPane scroll;
 
-	private static final long serialVersionUID = 1L;
-
-	private EncryptedEditorManager manager;
-
-	private final String NEW_WINDOW_NAME = "Untitled - Encrypted Editor";
 	private final String WINDOOW_NAME_EXTENSION = " - Encrypted Editor";
-	private final int WINDOW_WIDTH = 800;
-	private final int WINDOW_HEIGHT = 600;
 
 	// Menu-bar containing list of sub-menus
 	private JMenuBar menuBar;
@@ -87,43 +86,40 @@ public class EncryptedEditorGUI extends JFrame
 	private JMenu helpMenu;
 	private JMenuItem aboutItem;
 
-	public EncryptedEditorGUI()
-	{
-		// TODO: change to dark theme when encrypted and light theme when not
+	private Window window;
 
-		manager = new EncryptedEditorManager();
+	private final Font font = new Font("serif", Font.PLAIN, 20);
+
+	public static GUIManager getInstance()
+	{
+		return new GUIManager();
+	}
+
+	private GUIManager()
+	{
+		window = Window.getInstance();
 		encrypted = true;
 		filePath = "";
 		fileChanged = false;
 
-		// originally the file will not have a name
-		setTitle(NEW_WINDOW_NAME);
-		setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		// center the window
-		setLocationRelativeTo(null);
-
-		// TODO: setUIFont();
-
 		buildMenuBar();
 		buildPanel();
-		add(panel);
-		setVisible(true);
-	}
 
-	public void setUIFont()
-	{
+		window.add(panel);
 
+		WindowUtility.createWindow(window);
 	}
 
 	private void buildPanel()
 	{
 		panel = new JPanel(new BorderLayout(1, 0));
 		panel.add(label, BorderLayout.NORTH);
+		
 		// white space on west side of the window
 		panel.add(new JLabel(), BorderLayout.WEST);
 
 		textArea = new JTextArea();
+		
 		textArea.getDocument().addDocumentListener(new DocumentListener()
 		{
 
@@ -165,7 +161,7 @@ public class EncryptedEditorGUI extends JFrame
 		menuBar.add(viewMenu);
 		menuBar.add(helpMenu);
 
-		setJMenuBar(menuBar);
+		window.setJMenuBar(menuBar);
 	}
 
 	private void buildFileMenu()
@@ -179,48 +175,44 @@ public class EncryptedEditorGUI extends JFrame
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				int option = -1;
-				if (fileChanged)
+				int option;
+				
+				//if (fileChanged)
 				{
-					option = JOptionPane.showConfirmDialog(panel, "Do you want to save changes?");
+					 option = JOptionPane.showConfirmDialog(panel, "Do you want to save changes?"));
 				}
-
+				
 				switch (option)
 				{
 
 				// yes
-				case 0:
-					//TODO: save changes
+				case YES:
+					// TODO: save changes
 					/*
-					String input = JOptionPane.showInputDialog(panel, "Enter the filename: ")
-							.replaceAll("[\\\\/:*?\"<>|]", "");
-
-					if (input != null)
-					{
-						int option = -1;
-
-						if (manager.fileExists(filePath))
-						{
-							option = JOptionPane.showConfirmDialog(panel,
-									filePath + " already exists.\nDo you want to replace it?");
-						}
-					}
-					*/
+					 * String input = JOptionPane.showInputDialog(panel, "Enter the filename: ")
+					 * .replaceAll("[\\\\/:*?\"<>|]", "");
+					 * 
+					 * if (input != null) { int option = -1;
+					 * 
+					 * if (manager.fileExists(filePath)) { option =
+					 * JOptionPane.showConfirmDialog(panel, filePath +
+					 * " already exists.\nDo you want to replace it?"); } }
+					 */
 					break;
 
 				// cancel
-				case 2:
+				case NO:
 					break;
 
 				// no
-				case 1:
+				case CANCEL:
 
 					// reset values
 				default:
 					encrypted = true;
 					filePath = "";
 					textArea.setText("");
-					setTitle(NEW_WINDOW_NAME);
+					// setTitle(NEW_WINDOW_NAME);
 					textArea.setText("");
 				}
 
@@ -242,22 +234,16 @@ public class EncryptedEditorGUI extends JFrame
 				if (input != null)
 				{
 					filePath = input;
-					if (manager.fileExists(filePath))
-					{
-						if (encrypted)
-						{
-							String key = JOptionPane.showInputDialog(panel, "");
-							textArea.setText(manager.readEncryptedFile(Integer.parseInt(key), filePath));
-						} else
-						{
-							textArea.setText(manager.readFile(input));
-						}
-
-						setTitle(manager.getFileName(filePath) + " - Encrypted Editor");
-					} else
-					{
-						JOptionPane.showMessageDialog(panel, "File not found. Check the file name and try again.");
-					}
+					/*
+					 * if (manager.fileExists(filePath)) { if (encrypted) { String key =
+					 * JOptionPane.showInputDialog(panel, "");
+					 * textArea.setText(manager.readEncryptedFile(Integer.parseInt(key), filePath));
+					 * } else { textArea.setText(manager.readFile(input)); }
+					 * 
+					 * setTitle(manager.getFileName(filePath) + " - Encrypted Editor"); } else {
+					 * JOptionPane.showMessageDialog(panel,
+					 * "File not found. Check the file name and try again."); }
+					 */
 
 				}
 			}
@@ -280,32 +266,22 @@ public class EncryptedEditorGUI extends JFrame
 					String input = JOptionPane.showInputDialog(panel, "Enter the filename: ")
 							.replaceAll("[\\\\/:*?\"<>|]", "");
 
-					if (input != null)
-					{
-
-						int option = -1;
-
-						if (manager.fileExists(filePath))
-						{
-							option = JOptionPane.showConfirmDialog(panel,
-									filePath + " already exists.\nDo you want to replace it?");
-						}
-
-						switch (option)
-						{
-						// user presses 'no'
-						case 1:
-							// user presses 'cancel'
-						case 2:
-
-							break;
-
-						// continue
-						default:
-							filePath = input;
-							save();
-						}
-					}
+					/*
+					 * if (input != null) {
+					 * 
+					 * int option = -1;
+					 * 
+					 * if (manager.fileExists(filePath)) { option =
+					 * JOptionPane.showConfirmDialog(panel, filePath +
+					 * " already exists.\nDo you want to replace it?"); }
+					 * 
+					 * switch (option) { // user presses 'no' case 1: // user presses 'cancel' case
+					 * 2:
+					 * 
+					 * break;
+					 * 
+					 * // continue default: filePath = input; save(); } }
+					 */
 
 				} else
 				{
@@ -328,13 +304,11 @@ public class EncryptedEditorGUI extends JFrame
 				if (input != null)
 				{
 					int option = -1;
-
-					if (manager.fileExists(filePath))
-					{
-						option = JOptionPane.showConfirmDialog(panel,
-								filePath + " already exists.\nDo you want to replace it?");
-					}
-
+					/*
+					 * if (manager.fileExists(filePath)) { option =
+					 * JOptionPane.showConfirmDialog(panel, filePath +
+					 * " already exists.\nDo you want to replace it?"); }
+					 */
 					switch (option)
 					{
 					// user presses 'no'
@@ -371,6 +345,7 @@ public class EncryptedEditorGUI extends JFrame
 		});
 
 		fileMenu = new JMenu("File");
+		fileMenu.setFont(font);
 		fileMenu.setMnemonic(KeyEvent.VK_F);
 
 		fileMenu.add(newItem);
@@ -416,6 +391,7 @@ public class EncryptedEditorGUI extends JFrame
 		encryptedMode.setSelected(true);
 		// By default, encrypted mode is on
 		label = new JLabel("Encrypted Mode: ON", SwingConstants.CENTER);
+		label.setFont(font);
 		encryptedMode.addActionListener(new ActionListener()
 		{
 
@@ -435,6 +411,7 @@ public class EncryptedEditorGUI extends JFrame
 		});
 
 		editMenu = new JMenu("Edit");
+		editMenu.setFont(font);
 
 		editMenu.add(undoItem);
 		editMenu.add(redoItem);
@@ -452,16 +429,20 @@ public class EncryptedEditorGUI extends JFrame
 	private void buildFormatMenu()
 	{
 		formatMenu = new JMenu("Format");
+		formatMenu.setFont(font);
 	}
 
 	private void buildViewMenu()
 	{
 		viewMenu = new JMenu("View");
+		viewMenu.setFont(font);
 	}
 
 	private void buildHelpMenu()
 	{
 		aboutItem = new JMenuItem("About Encrypted Editor");
+		aboutItem.setFont(font);
+
 		aboutItem.addActionListener(new ActionListener()
 		{
 
@@ -474,6 +455,7 @@ public class EncryptedEditorGUI extends JFrame
 		});
 
 		helpMenu = new JMenu("Help");
+		helpMenu.setFont(font);
 		helpMenu.add(aboutItem);
 	}
 
@@ -485,14 +467,15 @@ public class EncryptedEditorGUI extends JFrame
 
 			if (input != null)
 			{
-				manager.writeEncryptedFile(Integer.parseInt(input), textArea.getText(), filePath);
+				// manager.writeEncryptedFile(Integer.parseInt(input), textArea.getText(),
+				// filePath);
 			}
 
 		} else
 		{
-			manager.writeFile(textArea.getText(), filePath);
+			// manager.writeFile(textArea.getText(), filePath);
 		}
 
-		setTitle(manager.getFileName(filePath) + WINDOOW_NAME_EXTENSION);
+		// setTitle(manager.getFileName(filePath) + WINDOOW_NAME_EXTENSION);
 	}
 }

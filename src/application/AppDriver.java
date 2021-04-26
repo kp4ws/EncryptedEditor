@@ -1,22 +1,23 @@
 package application;
-import gui.EncryptedEditorGUI;
+
+import gui.GUIManager;
 
 /**
+ * Starts up the application and instantiates the GUI Manager.
  * 
  * @author kentp
- *
+ * @version 1.1
  */
-public class AppDriver
+public final class AppDriver
 {
-	private static String filePath = "test";
 
 	/**
 	 * Main method of the program
 	 * 
-	 * @param args
+	 * @param args Arguments passed in from command line
 	 */
 	public static void main(String[] args)
 	{
-		new EncryptedEditorGUI();
+		GUIManager.getInstance();
 	}
 }
