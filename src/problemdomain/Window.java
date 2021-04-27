@@ -11,17 +11,20 @@ import javax.swing.JFrame;
  */
 public final class Window extends JFrame
 {
-	private static Window windowInstance = null;
-
-	public static final Window getInstance()
+	private final boolean ENCRYPTED_MODE;
+	
+	public static final Window getInstance(boolean mode)
 	{
-		if (windowInstance == null)
-		{
-			windowInstance = new Window();
-		}
-
-		return windowInstance;
+		return new Window(mode);
 	}
 
-	private Window() {}
+	private Window(boolean mode)
+	{
+		ENCRYPTED_MODE = mode;
+	}
+
+	public boolean isEncryptedMode()
+	{
+		return ENCRYPTED_MODE;
+	}
 }

@@ -6,10 +6,15 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.rmi.server.Operation;
-import java.time.Year;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Scanner;
 
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -21,16 +26,12 @@ import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
-import javax.swing.UIManager;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.plaf.FontUIResource;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import problemdomain.Window;
 import utility.WindowUtility;
-
-
-
 
 /**
  * GUIManager acts as the manager of the program and delegates work to the
@@ -41,19 +42,15 @@ import utility.WindowUtility;
  */
 public final class GUIManager
 {
-	public enum Option {YES, NO, CANCEL}
-	// file info
-	private String filePath;
-	private boolean fileChanged;
-	private boolean encrypted;
+
+	// constants
+	private final Font MAIN_FONT;
 
 	// general use
-	private JLabel label;
-	private JPanel panel;
-	private JTextArea textArea;
-	private JScrollPane scroll;
-
-	private final String WINDOOW_NAME_EXTENSION = " - Encrypted Editor";
+	private JLabel headerLabel;
+	private JPanel mainPanel;
+	private JTextArea mainTextArea;
+	private JScrollPane scrollPane;
 
 	// Menu-bar containing list of sub-menus
 	private JMenuBar menuBar;
@@ -86,9 +83,12 @@ public final class GUIManager
 	private JMenu helpMenu;
 	private JMenuItem aboutItem;
 
-	private Window window;
+	private boolean textChanged;
 
-	private final Font font = new Font("serif", Font.PLAIN, 20);
+	private ArrayList<String> errList;
+
+	private Window window;
+	private FileServices fileServices;
 
 	public static GUIManager getInstance()
 	{
@@ -97,42 +97,46 @@ public final class GUIManager
 
 	private GUIManager()
 	{
-		window = Window.getInstance();
-		encrypted = true;
-		filePath = "";
-		fileChanged = false;
+		errList = new ArrayList<String>();
+		window = Window.getInstance(true);
+		fileServices = new FileServices();
+		MAIN_FONT = new Font("serif", Font.PLAIN, 20);
+		textChanged = false;
 
 		buildMenuBar();
 		buildPanel();
 
-		window.add(panel);
+		// TODO Apply general UI style
+
+		window.add(mainPanel);
 
 		WindowUtility.createWindow(window);
 	}
 
 	private void buildPanel()
 	{
-		panel = new JPanel(new BorderLayout(1, 0));
-		panel.add(label, BorderLayout.NORTH);
-		
-		// white space on west side of the window
-		panel.add(new JLabel(), BorderLayout.WEST);
+		mainPanel = new JPanel(new BorderLayout(1, 0));
+		mainPanel.add(headerLabel, BorderLayout.NORTH);
 
-		textArea = new JTextArea();
-		
-		textArea.getDocument().addDocumentListener(new DocumentListener()
+		// white space on west side of the window
+		mainPanel.add(new JLabel(), BorderLayout.WEST);
+
+		mainTextArea = new JTextArea();
+		mainTextArea.setFont(MAIN_FONT);
+
+		mainTextArea.getDocument().addDocumentListener(new DocumentListener()
 		{
 
 			@Override
 			public void removeUpdate(DocumentEvent e)
 			{
-				fileChanged = true;
+				textChanged = true;
 			}
 
 			@Override
 			public void insertUpdate(DocumentEvent e)
 			{
-				fileChanged = true;
+				textChanged = true;
 			}
 
 			@Override
@@ -142,8 +146,8 @@ public final class GUIManager
 			}
 		});
 
-		scroll = new JScrollPane(textArea);
-		panel.add(scroll);
+		scrollPane = new JScrollPane(mainTextArea);
+		mainPanel.add(scrollPane);
 	}
 
 	private void buildMenuBar()
@@ -160,7 +164,6 @@ public final class GUIManager
 		menuBar.add(formatMenu);
 		menuBar.add(viewMenu);
 		menuBar.add(helpMenu);
-
 		window.setJMenuBar(menuBar);
 	}
 
@@ -175,47 +178,7 @@ public final class GUIManager
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				int option;
-				
-				//if (fileChanged)
-				{
-					 option = JOptionPane.showConfirmDialog(panel, "Do you want to save changes?"));
-				}
-				
-				switch (option)
-				{
-
-				// yes
-				case YES:
-					// TODO: save changes
-					/*
-					 * String input = JOptionPane.showInputDialog(panel, "Enter the filename: ")
-					 * .replaceAll("[\\\\/:*?\"<>|]", "");
-					 * 
-					 * if (input != null) { int option = -1;
-					 * 
-					 * if (manager.fileExists(filePath)) { option =
-					 * JOptionPane.showConfirmDialog(panel, filePath +
-					 * " already exists.\nDo you want to replace it?"); } }
-					 */
-					break;
-
-				// cancel
-				case NO:
-					break;
-
-				// no
-				case CANCEL:
-
-					// reset values
-				default:
-					encrypted = true;
-					filePath = "";
-					textArea.setText("");
-					// setTitle(NEW_WINDOW_NAME);
-					textArea.setText("");
-				}
-
+				fileServices.newFile();
 			}
 
 		});
@@ -229,23 +192,7 @@ public final class GUIManager
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				String input = JOptionPane.showInputDialog(panel, "Enter the filename: ");
-
-				if (input != null)
-				{
-					filePath = input;
-					/*
-					 * if (manager.fileExists(filePath)) { if (encrypted) { String key =
-					 * JOptionPane.showInputDialog(panel, "");
-					 * textArea.setText(manager.readEncryptedFile(Integer.parseInt(key), filePath));
-					 * } else { textArea.setText(manager.readFile(input)); }
-					 * 
-					 * setTitle(manager.getFileName(filePath) + " - Encrypted Editor"); } else {
-					 * JOptionPane.showMessageDialog(panel,
-					 * "File not found. Check the file name and try again."); }
-					 */
-
-				}
+				fileServices.openFile();
 			}
 		});
 
@@ -255,38 +202,10 @@ public final class GUIManager
 		saveItem.setAccelerator(KeyStroke.getKeyStroke('S', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		saveItem.addActionListener(new ActionListener()
 		{
-
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				// if the file isn't currently opened in the window
-				if (filePath.equals(""))
-				{
-					// eliminates illegal characters
-					String input = JOptionPane.showInputDialog(panel, "Enter the filename: ")
-							.replaceAll("[\\\\/:*?\"<>|]", "");
-
-					/*
-					 * if (input != null) {
-					 * 
-					 * int option = -1;
-					 * 
-					 * if (manager.fileExists(filePath)) { option =
-					 * JOptionPane.showConfirmDialog(panel, filePath +
-					 * " already exists.\nDo you want to replace it?"); }
-					 * 
-					 * switch (option) { // user presses 'no' case 1: // user presses 'cancel' case
-					 * 2:
-					 * 
-					 * break;
-					 * 
-					 * // continue default: filePath = input; save(); } }
-					 */
-
-				} else
-				{
-					save();
-				}
+				fileServices.saveFile();
 			}
 		});
 
@@ -297,34 +216,7 @@ public final class GUIManager
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				// eliminates illegal characters
-				String input = JOptionPane.showInputDialog(panel, "Enter the filename: ").replaceAll("[\\\\/:*?\"<>|]",
-						"");
-
-				if (input != null)
-				{
-					int option = -1;
-					/*
-					 * if (manager.fileExists(filePath)) { option =
-					 * JOptionPane.showConfirmDialog(panel, filePath +
-					 * " already exists.\nDo you want to replace it?"); }
-					 */
-					switch (option)
-					{
-					// user presses 'no'
-					case 1:
-						// user presses 'cancel'
-					case 2:
-
-						break;
-
-					// continue
-					default:
-						filePath = input;
-						save();
-					}
-				}
-
+				fileServices.saveAsFile();
 			}
 		});
 
@@ -336,7 +228,7 @@ public final class GUIManager
 			@Override
 			public void actionPerformed(ActionEvent arg0)
 			{
-				int option = JOptionPane.showConfirmDialog(panel, "Are you sure you want to exit?");
+				int option = JOptionPane.showConfirmDialog(mainPanel, "Are you sure you want to exit?");
 				if (option == 0)
 				{
 					System.exit(0);
@@ -345,7 +237,7 @@ public final class GUIManager
 		});
 
 		fileMenu = new JMenu("File");
-		fileMenu.setFont(font);
+		fileMenu.setFont(MAIN_FONT);
 		fileMenu.setMnemonic(KeyEvent.VK_F);
 
 		fileMenu.add(newItem);
@@ -376,42 +268,34 @@ public final class GUIManager
 
 		deleteItem = new JMenuItem("Delete");
 		deleteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
-		deleteItem.addActionListener(new ActionListener()
-		{
-
-			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				JOptionPane.showMessageDialog(panel, "Delete");
-			}
-		});
 
 		encryptedMode = new JCheckBoxMenuItem("Encrypted Mode");
 		encryptedMode.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
 		encryptedMode.setSelected(true);
-		// By default, encrypted mode is on
-		label = new JLabel("Encrypted Mode: ON", SwingConstants.CENTER);
-		label.setFont(font);
+
+		headerLabel = new JLabel("Encrypted Mode: ON", SwingConstants.CENTER);
+		headerLabel.setFont(MAIN_FONT);
 		encryptedMode.addActionListener(new ActionListener()
 		{
 
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				if (encrypted)
+				window = Window.getInstance(!window.isEncryptedMode());
+
+				if (window.isEncryptedMode())
 				{
-					label.setText("Encrypted Mode: ON");
-					encrypted = true;
+					headerLabel.setText("Encrypted Mode: ON");
+
 				} else
 				{
-					label.setText("Encrypted Mode: OFF");
-					encrypted = false;
+					headerLabel.setText("Encrypted Mode: OFF");
 				}
 			}
 		});
 
 		editMenu = new JMenu("Edit");
-		editMenu.setFont(font);
+		editMenu.setFont(MAIN_FONT);
 
 		editMenu.add(undoItem);
 		editMenu.add(redoItem);
@@ -429,53 +313,132 @@ public final class GUIManager
 	private void buildFormatMenu()
 	{
 		formatMenu = new JMenu("Format");
-		formatMenu.setFont(font);
+		formatMenu.setFont(MAIN_FONT);
 	}
 
 	private void buildViewMenu()
 	{
 		viewMenu = new JMenu("View");
-		viewMenu.setFont(font);
+		viewMenu.setFont(MAIN_FONT);
 	}
 
 	private void buildHelpMenu()
 	{
 		aboutItem = new JMenuItem("About Encrypted Editor");
-		aboutItem.setFont(font);
-
+		aboutItem.setFont(MAIN_FONT);
 		aboutItem.addActionListener(new ActionListener()
 		{
 
 			@Override
 			public void actionPerformed(ActionEvent arg0)
 			{
-				JOptionPane.showMessageDialog(panel, "Encrypted Editor is currently a work in progress."
+				JOptionPane.showMessageDialog(mainPanel, "Encrypted Editor is currently a work in progress."
 						+ "\nIdeally I plan to create an interface similar to notepad and has the ability to encrypt messages that the user enters");
 			}
 		});
 
 		helpMenu = new JMenu("Help");
-		helpMenu.setFont(font);
+		helpMenu.setFont(MAIN_FONT);
 		helpMenu.add(aboutItem);
 	}
 
-	private void save()
+	private class FileServices
 	{
-		if (encrypted)
-		{
-			String input = JOptionPane.showInputDialog(panel, "Enter the key: ");
 
-			if (input != null)
-			{
-				// manager.writeEncryptedFile(Integer.parseInt(input), textArea.getText(),
-				// filePath);
-			}
+		private final File DEFAULT_DIRECTORY;
+		private final FileNameExtensionFilter FILTER;
+		private JFileChooser fileChooser;
+		private File file;
 
-		} else
+		public FileServices()
 		{
-			// manager.writeFile(textArea.getText(), filePath);
+			DEFAULT_DIRECTORY = new File("./res");
+			FILTER = new FileNameExtensionFilter("Text Documents (*.txt)", "txt");
+
+			fileChooser = new JFileChooser();
+			fileChooser.setCurrentDirectory(DEFAULT_DIRECTORY);
+			fileChooser.addChoosableFileFilter(FILTER);
+			fileChooser.setFileFilter(FILTER);
 		}
 
-		// setTitle(manager.getFileName(filePath) + WINDOOW_NAME_EXTENSION);
+		public void newFile()
+		{
+			if (textChanged)
+			{
+
+			}
+
+			mainTextArea.setText("");
+		}
+
+		public void openFile()
+		{
+			fileChooser.setDialogTitle("Open");
+			int selection = fileChooser.showOpenDialog(mainPanel);
+
+			if (selection == JFileChooser.APPROVE_OPTION)
+			{
+				file = fileChooser.getSelectedFile();
+				try (Scanner fileReader = new Scanner(file))
+				{
+					String fileData = "";
+					while(fileReader.hasNext())
+					{
+						fileData += fileReader.nextLine() + "\n";
+					}
+					
+					mainTextArea.setText(fileData);
+					
+				} catch (FileNotFoundException e)
+				{
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+			}
+		}
+
+		public void saveFile()
+		{
+			if (file == null)
+			{
+				saveAsFile();
+				return;
+			}
+
+			persist();
+		}
+
+		public void saveAsFile()
+		{
+			fileChooser.setDialogTitle("Save As");
+			int selection = fileChooser.showSaveDialog(mainPanel);
+
+			if (selection == JFileChooser.APPROVE_OPTION)
+			{
+				file = new File(fileChooser.getSelectedFile() + "." + FILTER.getExtensions()[0]); // TODO dynamically
+																									// get extension
+				persist();
+			}
+		}
+
+		private void updateHeader()
+		{
+
+		}
+
+		private void persist()
+		{
+			try (PrintWriter pWriter = new PrintWriter(file))
+			{
+				pWriter.println(mainTextArea.getText());
+
+			} catch (IOException e)
+			{
+				JOptionPane.showMessageDialog(mainPanel, "Error occurred, please check logs.", "ERROR",
+						JOptionPane.ERROR_MESSAGE);
+				errList.add(e.toString());
+			}
+		}
 	}
 }
