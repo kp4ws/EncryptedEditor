@@ -10,7 +10,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Scanner;
 
 import javax.swing.JCheckBoxMenuItem;
@@ -44,7 +43,8 @@ public final class GUIManager
 {
 
 	// constants
-	private final Font MAIN_FONT;
+	private final Font MAIN_FONT = new Font("serif", Font.PLAIN, 20);
+	private final Font SUB_FONT = new Font("serif", Font.PLAIN, 18);
 
 	// general use
 	private JLabel headerLabel;
@@ -84,11 +84,8 @@ public final class GUIManager
 	private JMenuItem aboutItem;
 
 	private boolean textChanged;
-
-	private ArrayList<String> errList;
-
 	private Window window;
-	private FileServices fileServices;
+	private GUIServices guiServices;
 
 	public static GUIManager getInstance()
 	{
@@ -97,20 +94,22 @@ public final class GUIManager
 
 	private GUIManager()
 	{
-		errList = new ArrayList<String>();
-		window = Window.getInstance(true);
-		fileServices = new FileServices();
-		MAIN_FONT = new Font("serif", Font.PLAIN, 20);
-		textChanged = false;
-
+		init();
 		buildMenuBar();
 		buildPanel();
 
-		// TODO Apply general UI style
-
 		window.add(mainPanel);
-
 		WindowUtility.createWindow(window);
+	}
+
+	private void init()
+	{
+		window = Window.getInstance(true, "Untitled");
+		guiServices = new GUIServices();
+		textChanged = false;
+		
+		headerLabel = new JLabel(window.getHeader(), SwingConstants.CENTER);
+		headerLabel.setFont(MAIN_FONT);
 	}
 
 	private void buildPanel()
@@ -164,12 +163,14 @@ public final class GUIManager
 		menuBar.add(formatMenu);
 		menuBar.add(viewMenu);
 		menuBar.add(helpMenu);
+		
 		window.setJMenuBar(menuBar);
 	}
 
 	private void buildFileMenu()
 	{
 		newItem = new JMenuItem("New");
+		newItem.setFont(SUB_FONT);
 		// Ctrl + N
 		newItem.setAccelerator(KeyStroke.getKeyStroke('N', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		newItem.addActionListener(new ActionListener()
@@ -178,12 +179,28 @@ public final class GUIManager
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				fileServices.newFile();
+				if (textChanged)
+				{
+					int option = JOptionPane.showConfirmDialog(mainPanel, "Do you want to save changes to Untitled?",
+							"Select an Option", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE); // TODO
+
+					if (option == 0)
+					{
+						if(guiServices.saveAsFile(mainPanel, mainTextArea))
+						{
+							guiServices.newFile();
+						}
+						return;
+					}
+				}
+
+				guiServices.newFile();
 			}
 
 		});
 
 		openItem = new JMenuItem("Open");
+		openItem.setFont(SUB_FONT);
 		// Ctrl + O
 		openItem.setAccelerator(KeyStroke.getKeyStroke('O', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		openItem.addActionListener(new ActionListener()
@@ -192,11 +209,12 @@ public final class GUIManager
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				fileServices.openFile();
+				guiServices.openFile(mainPanel, mainTextArea);
 			}
 		});
 
 		saveItem = new JMenuItem("Save");
+		saveItem.setFont(SUB_FONT);
 		saveItem.setMnemonic(KeyEvent.VK_S);
 		// Ctrl + S
 		saveItem.setAccelerator(KeyStroke.getKeyStroke('S', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
@@ -205,22 +223,24 @@ public final class GUIManager
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				fileServices.saveFile();
+				guiServices.saveFile(mainPanel, mainTextArea);
 			}
 		});
 
 		saveAsItem = new JMenuItem("Save As");
+		saveAsItem.setFont(SUB_FONT);
 		saveAsItem.addActionListener(new ActionListener()
 		{
 
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				fileServices.saveAsFile();
+				guiServices.saveAsFile(mainPanel, mainTextArea);
 			}
 		});
 
 		exitItem = new JMenuItem("Exit");
+		exitItem.setFont(SUB_FONT);
 		exitItem.setMnemonic(KeyEvent.VK_X);
 		exitItem.addActionListener(new ActionListener()
 		{
@@ -254,43 +274,40 @@ public final class GUIManager
 	{
 		undoItem = new JMenuItem("Undo");
 		undoItem.setAccelerator(KeyStroke.getKeyStroke('Z', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		undoItem.setFont(SUB_FONT);
 
 		redoItem = new JMenuItem("Redo");
 		redoItem.setAccelerator(KeyStroke.getKeyStroke('Y', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		redoItem.setFont(SUB_FONT);
+
 		cutItem = new JMenuItem("Cut");
 		cutItem.setAccelerator(KeyStroke.getKeyStroke('X', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		cutItem.setFont(SUB_FONT);
 
 		copyItem = new JMenuItem("Copy");
 		copyItem.setAccelerator(KeyStroke.getKeyStroke('C', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		copyItem.setFont(SUB_FONT);
 
 		pasteItem = new JMenuItem("Paste");
 		pasteItem.setAccelerator(KeyStroke.getKeyStroke('V', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		pasteItem.setFont(SUB_FONT);
 
 		deleteItem = new JMenuItem("Delete");
 		deleteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
+		deleteItem.setFont(SUB_FONT);
 
 		encryptedMode = new JCheckBoxMenuItem("Encrypted Mode");
 		encryptedMode.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
 		encryptedMode.setSelected(true);
-
-		headerLabel = new JLabel("Encrypted Mode: ON", SwingConstants.CENTER);
-		headerLabel.setFont(MAIN_FONT);
+		encryptedMode.setFont(SUB_FONT);
 		encryptedMode.addActionListener(new ActionListener()
 		{
 
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				window = Window.getInstance(!window.isEncryptedMode());
-
-				if (window.isEncryptedMode())
-				{
-					headerLabel.setText("Encrypted Mode: ON");
-
-				} else
-				{
-					headerLabel.setText("Encrypted Mode: OFF");
-				}
+				window = Window.getInstance(!window.isEncrypted(), window.getTitle());
+				headerLabel.setText(window.getHeader());
 			}
 		});
 
@@ -332,8 +349,8 @@ public final class GUIManager
 			@Override
 			public void actionPerformed(ActionEvent arg0)
 			{
-				JOptionPane.showMessageDialog(mainPanel, "Encrypted Editor is currently a work in progress."
-						+ "\nIdeally I plan to create an interface similar to notepad and has the ability to encrypt messages that the user enters");
+				JOptionPane.showMessageDialog(mainPanel,
+						"Encrypted Editor is a simple text editor that allows the user to encrypt messages.");
 			}
 		});
 
@@ -341,40 +358,33 @@ public final class GUIManager
 		helpMenu.setFont(MAIN_FONT);
 		helpMenu.add(aboutItem);
 	}
-
-	private class FileServices
+	
+	private class GUIServices
 	{
-
-		private final File DEFAULT_DIRECTORY;
-		private final FileNameExtensionFilter FILTER;
+		private final File DEFAULT_DIRECTORY = new File("./res");
+		private final FileNameExtensionFilter FILTER = new FileNameExtensionFilter("Text Documents (*.txt)", "txt");
 		private JFileChooser fileChooser;
 		private File file;
 
-		public FileServices()
+		public GUIServices()
 		{
-			DEFAULT_DIRECTORY = new File("./res");
-			FILTER = new FileNameExtensionFilter("Text Documents (*.txt)", "txt");
-
 			fileChooser = new JFileChooser();
 			fileChooser.setCurrentDirectory(DEFAULT_DIRECTORY);
 			fileChooser.addChoosableFileFilter(FILTER);
 			fileChooser.setFileFilter(FILTER);
 		}
 
-		public void newFile()
+		public boolean newFile()
 		{
-			if (textChanged)
-			{
-
-			}
-
 			mainTextArea.setText("");
+			window = Window.getInstance(true, "Untitled");
+			return true;
 		}
 
-		public void openFile()
+		public boolean openFile(JPanel panel, JTextArea textArea)
 		{
 			fileChooser.setDialogTitle("Open");
-			int selection = fileChooser.showOpenDialog(mainPanel);
+			int selection = fileChooser.showOpenDialog(panel);
 
 			if (selection == JFileChooser.APPROVE_OPTION)
 			{
@@ -387,7 +397,7 @@ public final class GUIManager
 						fileData += fileReader.nextLine() + "\n";
 					}
 					
-					mainTextArea.setText(fileData);
+					textArea.setText(fileData);
 					
 				} catch (FileNotFoundException e)
 				{
@@ -396,49 +406,58 @@ public final class GUIManager
 				}
 
 			}
+			
+			return true;
 		}
 
-		public void saveFile()
+		public boolean saveFile(JPanel panel, JTextArea textArea)
 		{
 			if (file == null)
 			{
-				saveAsFile();
-				return;
+				return saveAsFile(panel, textArea);
 			}
-
-			persist();
+			
+			persist(panel, textArea);
+			return true;
 		}
 
-		public void saveAsFile()
+		public boolean saveAsFile(JPanel panel, JTextArea textArea)
 		{
 			fileChooser.setDialogTitle("Save As");
-			int selection = fileChooser.showSaveDialog(mainPanel);
+			int selection = fileChooser.showSaveDialog(panel);
 
 			if (selection == JFileChooser.APPROVE_OPTION)
 			{
 				file = new File(fileChooser.getSelectedFile() + "." + FILTER.getExtensions()[0]); // TODO dynamically
-																									// get extension
-				persist();
+				
+				String fileName = fileChooser.getSelectedFile().getName();
+				String title = fileName.substring(0, fileName.indexOf("."));
+				
+				window.setTitle(title);
+				
+				// get extension
+				persist(panel, textArea);
 			}
+			
+			return true;
 		}
 
-		private void updateHeader()
-		{
-
-		}
-
-		private void persist()
+		private void persist(JPanel panel, JTextArea textArea)
 		{
 			try (PrintWriter pWriter = new PrintWriter(file))
 			{
-				pWriter.println(mainTextArea.getText());
+				pWriter.print(textArea.getText());
 
 			} catch (IOException e)
 			{
-				JOptionPane.showMessageDialog(mainPanel, "Error occurred, please check logs.", "ERROR",
+				JOptionPane.showMessageDialog(panel, "Error occurred, please check logs.", "ERROR",
 						JOptionPane.ERROR_MESSAGE);
-				errList.add(e.toString());
 			}
+		}
+		
+		private void persistEncrypted(JPanel panel, JTextArea textArea)
+		{
+			
 		}
 	}
 }

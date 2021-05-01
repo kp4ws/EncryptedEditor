@@ -20,7 +20,7 @@ public final class WindowUtility
 	
 	public static void createWindow(Window window)
 	{
-		window.setTitle("Untitled");
+		window.setTitle(window.getWindowTitle());
 		window.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		window.setLocationRelativeTo(null);

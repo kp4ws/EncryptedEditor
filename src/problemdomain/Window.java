@@ -11,20 +11,33 @@ import javax.swing.JFrame;
  */
 public final class Window extends JFrame
 {
+	private final String WINDOW_EXTENSION = " - Encrypted Editor";
 	private final boolean ENCRYPTED_MODE;
+	private final String WINDOW_TITLE;
 	
-	public static final Window getInstance(boolean mode)
+	public static final Window getInstance(boolean mode, String title)
 	{
-		return new Window(mode);
+		return new Window(mode, title);
 	}
 
-	private Window(boolean mode)
+	private Window(boolean encrypted, String title)
 	{
-		ENCRYPTED_MODE = mode;
+		ENCRYPTED_MODE = encrypted;
+		WINDOW_TITLE = title + WINDOW_EXTENSION;
 	}
 
-	public boolean isEncryptedMode()
+	public String getWindowTitle()
+	{
+		return WINDOW_TITLE;
+	}
+	
+	public boolean isEncrypted()
 	{
 		return ENCRYPTED_MODE;
+	}
+	
+	public String getHeader()
+	{
+		return ENCRYPTED_MODE == true ? "Encrypted Mode: ON" : "Encrypted Mode: OFF";
 	}
 }
