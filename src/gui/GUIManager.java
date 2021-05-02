@@ -1,3 +1,4 @@
+
 package gui;
 
 import java.awt.BorderLayout;
@@ -8,7 +9,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Scanner;
 
@@ -29,8 +29,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import problemdomain.Window;
-import utility.WindowUtility;
+import problemdomain.MainWindow;
+import problemdomain.WindowProperties;
+import utility.PasswordUtility;
 
 /**
  * GUIManager acts as the manager of the program and delegates work to the
@@ -39,8 +40,7 @@ import utility.WindowUtility;
  * @author kentp
  * @version 1.1
  */
-public final class GUIManager
-{
+public final class GUIManager {
 
 	// constants
 	private final Font MAIN_FONT = new Font("serif", Font.PLAIN, 20);
@@ -73,48 +73,35 @@ public final class GUIManager
 	private JMenuItem deleteItem;
 	private JCheckBoxMenuItem encryptedMode;
 
-	// TODO: Format sub-menu components
-	private JMenu formatMenu;
-
-	// TODO: View sub-menu components
-	private JMenu viewMenu;
-
-	// TODO: Help sub-menu components
+	// Help sub-menu components
 	private JMenu helpMenu;
 	private JMenuItem aboutItem;
 
-	private boolean textChanged;
-	private Window window;
+	// cached references
+	private WindowProperties windowProperties;
+	private MainWindow window;
 	private GUIServices guiServices;
 
-	public static GUIManager getInstance()
-	{
+	public static GUIManager getInstance() {
 		return new GUIManager();
 	}
 
-	private GUIManager()
-	{
-		init();
+	private GUIManager() {
+		windowProperties = new WindowProperties();
+		window = new MainWindow();
+		guiServices = new GUIServices();
+
 		buildMenuBar();
 		buildPanel();
 
 		window.add(mainPanel);
-		WindowUtility.createWindow(window);
+		window.createWindow(windowProperties);
 	}
 
-	private void init()
-	{
-		window = Window.getInstance(true, "Untitled");
-		guiServices = new GUIServices();
-		textChanged = false;
-		
-		headerLabel = new JLabel(window.getHeader(), SwingConstants.CENTER);
-		headerLabel.setFont(MAIN_FONT);
-	}
-
-	private void buildPanel()
-	{
+	private void buildPanel() {
 		mainPanel = new JPanel(new BorderLayout(1, 0));
+		headerLabel = new JLabel(windowProperties.getHeader(), SwingConstants.CENTER);
+		headerLabel.setFont(MAIN_FONT);
 		mainPanel.add(headerLabel, BorderLayout.NORTH);
 
 		// white space on west side of the window
@@ -123,25 +110,20 @@ public final class GUIManager
 		mainTextArea = new JTextArea();
 		mainTextArea.setFont(MAIN_FONT);
 
-		mainTextArea.getDocument().addDocumentListener(new DocumentListener()
-		{
+		mainTextArea.getDocument().addDocumentListener(new DocumentListener() {
 
 			@Override
-			public void removeUpdate(DocumentEvent e)
-			{
-				textChanged = true;
+			public void removeUpdate(DocumentEvent e) {
+				windowProperties.setTextChanged(true);
 			}
 
 			@Override
-			public void insertUpdate(DocumentEvent e)
-			{
-				textChanged = true;
+			public void insertUpdate(DocumentEvent e) {
+				windowProperties.setTextChanged(true);
 			}
 
 			@Override
-			public void changedUpdate(DocumentEvent e)
-			{
-				// fileChanged = true;
+			public void changedUpdate(DocumentEvent e) {
 			}
 		});
 
@@ -149,45 +131,35 @@ public final class GUIManager
 		mainPanel.add(scrollPane);
 	}
 
-	private void buildMenuBar()
-	{
+	private void buildMenuBar() {
 		buildFileMenu();
 		buildEditMenu();
-		buildFormatMenu();
-		buildViewMenu();
 		buildHelpMenu();
 
 		menuBar = new JMenuBar();
 		menuBar.add(fileMenu);
 		menuBar.add(editMenu);
-		menuBar.add(formatMenu);
-		menuBar.add(viewMenu);
 		menuBar.add(helpMenu);
-		
+
 		window.setJMenuBar(menuBar);
 	}
 
-	private void buildFileMenu()
-	{
+	private void buildFileMenu() {
 		newItem = new JMenuItem("New");
 		newItem.setFont(SUB_FONT);
 		// Ctrl + N
 		newItem.setAccelerator(KeyStroke.getKeyStroke('N', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-		newItem.addActionListener(new ActionListener()
-		{
+		newItem.addActionListener(new ActionListener() {
 
 			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				if (textChanged)
-				{
+			public void actionPerformed(ActionEvent e) {
+
+				if (windowProperties.isTextChanged()) {
 					int option = JOptionPane.showConfirmDialog(mainPanel, "Do you want to save changes to Untitled?",
 							"Select an Option", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE); // TODO
 
-					if (option == 0)
-					{
-						if(guiServices.saveAsFile(mainPanel, mainTextArea))
-						{
+					if (option == 0) {
+						if (guiServices.saveAsFile(mainPanel, mainTextArea)) {
 							guiServices.newFile();
 						}
 						return;
@@ -203,13 +175,11 @@ public final class GUIManager
 		openItem.setFont(SUB_FONT);
 		// Ctrl + O
 		openItem.setAccelerator(KeyStroke.getKeyStroke('O', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-		openItem.addActionListener(new ActionListener()
-		{
+		openItem.addActionListener(new ActionListener() {
 
 			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				guiServices.openFile(mainPanel, mainTextArea);
+			public void actionPerformed(ActionEvent e) {
+				guiServices.openFile();
 			}
 		});
 
@@ -218,23 +188,19 @@ public final class GUIManager
 		saveItem.setMnemonic(KeyEvent.VK_S);
 		// Ctrl + S
 		saveItem.setAccelerator(KeyStroke.getKeyStroke('S', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-		saveItem.addActionListener(new ActionListener()
-		{
+		saveItem.addActionListener(new ActionListener() {
 			@Override
-			public void actionPerformed(ActionEvent e)
-			{
+			public void actionPerformed(ActionEvent e) {
 				guiServices.saveFile(mainPanel, mainTextArea);
 			}
 		});
 
 		saveAsItem = new JMenuItem("Save As");
 		saveAsItem.setFont(SUB_FONT);
-		saveAsItem.addActionListener(new ActionListener()
-		{
+		saveAsItem.addActionListener(new ActionListener() {
 
 			@Override
-			public void actionPerformed(ActionEvent e)
-			{
+			public void actionPerformed(ActionEvent e) {
 				guiServices.saveAsFile(mainPanel, mainTextArea);
 			}
 		});
@@ -242,15 +208,12 @@ public final class GUIManager
 		exitItem = new JMenuItem("Exit");
 		exitItem.setFont(SUB_FONT);
 		exitItem.setMnemonic(KeyEvent.VK_X);
-		exitItem.addActionListener(new ActionListener()
-		{
+		exitItem.addActionListener(new ActionListener() {
 
 			@Override
-			public void actionPerformed(ActionEvent arg0)
-			{
+			public void actionPerformed(ActionEvent arg0) {
 				int option = JOptionPane.showConfirmDialog(mainPanel, "Are you sure you want to exit?");
-				if (option == 0)
-				{
+				if (option == 0) {
 					System.exit(0);
 				}
 			}
@@ -270,8 +233,7 @@ public final class GUIManager
 
 	}
 
-	private void buildEditMenu()
-	{
+	private void buildEditMenu() {
 		undoItem = new JMenuItem("Undo");
 		undoItem.setAccelerator(KeyStroke.getKeyStroke('Z', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		undoItem.setFont(SUB_FONT);
@@ -300,14 +262,12 @@ public final class GUIManager
 		encryptedMode.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
 		encryptedMode.setSelected(true);
 		encryptedMode.setFont(SUB_FONT);
-		encryptedMode.addActionListener(new ActionListener()
-		{
+		encryptedMode.addActionListener(new ActionListener() {
 
 			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				window = Window.getInstance(!window.isEncrypted(), window.getTitle());
-				headerLabel.setText(window.getHeader());
+			public void actionPerformed(ActionEvent e) {
+				windowProperties.setEncryptedMode(!windowProperties.isEncrypted());
+				headerLabel.setText(windowProperties.getHeader());
 			}
 		});
 
@@ -327,28 +287,13 @@ public final class GUIManager
 		editMenu.add(encryptedMode);
 	}
 
-	private void buildFormatMenu()
-	{
-		formatMenu = new JMenu("Format");
-		formatMenu.setFont(MAIN_FONT);
-	}
-
-	private void buildViewMenu()
-	{
-		viewMenu = new JMenu("View");
-		viewMenu.setFont(MAIN_FONT);
-	}
-
-	private void buildHelpMenu()
-	{
+	private void buildHelpMenu() {
 		aboutItem = new JMenuItem("About Encrypted Editor");
 		aboutItem.setFont(MAIN_FONT);
-		aboutItem.addActionListener(new ActionListener()
-		{
+		aboutItem.addActionListener(new ActionListener() {
 
 			@Override
-			public void actionPerformed(ActionEvent arg0)
-			{
+			public void actionPerformed(ActionEvent arg0) {
 				JOptionPane.showMessageDialog(mainPanel,
 						"Encrypted Editor is a simple text editor that allows the user to encrypt messages.");
 			}
@@ -358,106 +303,106 @@ public final class GUIManager
 		helpMenu.setFont(MAIN_FONT);
 		helpMenu.add(aboutItem);
 	}
-	
-	private class GUIServices
-	{
+
+	private class GUIServices {
 		private final File DEFAULT_DIRECTORY = new File("./res");
 		private final FileNameExtensionFilter FILTER = new FileNameExtensionFilter("Text Documents (*.txt)", "txt");
 		private JFileChooser fileChooser;
 		private File file;
 
-		public GUIServices()
-		{
+		public GUIServices() {
 			fileChooser = new JFileChooser();
 			fileChooser.setCurrentDirectory(DEFAULT_DIRECTORY);
 			fileChooser.addChoosableFileFilter(FILTER);
 			fileChooser.setFileFilter(FILTER);
 		}
 
-		public boolean newFile()
-		{
+		public boolean newFile() {
 			mainTextArea.setText("");
-			window = Window.getInstance(true, "Untitled");
+			windowProperties.reset();
+			window.setTitle(windowProperties.getWindowTitle());
+			headerLabel.setText(windowProperties.getHeader());
 			return true;
 		}
 
-		public boolean openFile(JPanel panel, JTextArea textArea)
-		{
+		public boolean openFile() {
 			fileChooser.setDialogTitle("Open");
-			int selection = fileChooser.showOpenDialog(panel);
+			int selection = fileChooser.showOpenDialog(mainPanel);
 
-			if (selection == JFileChooser.APPROVE_OPTION)
-			{
+			if (selection == JFileChooser.APPROVE_OPTION) {
 				file = fileChooser.getSelectedFile();
-				try (Scanner fileReader = new Scanner(file))
-				{
+				windowProperties.setWindowTitle(fileChooser.getSelectedFile().getName());
+				window.setTitle(windowProperties.getWindowTitle());
+
+				try (Scanner fileReader = new Scanner(file)) {
 					String fileData = "";
-					while(fileReader.hasNext())
-					{
+					while (fileReader.hasNext()) {
 						fileData += fileReader.nextLine() + "\n";
 					}
-					
-					textArea.setText(fileData);
-					
-				} catch (FileNotFoundException e)
-				{
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+					mainTextArea.setText(fileData);
+					return true;
 
+				} catch (FileNotFoundException e) {
+					JOptionPane.showMessageDialog(mainPanel, "Error occurred, please try again.", "ERROR",
+							JOptionPane.ERROR_MESSAGE);
+				}
 			}
-			
-			return true;
+
+			return false;
 		}
 
-		public boolean saveFile(JPanel panel, JTextArea textArea)
-		{
-			if (file == null)
-			{
+		public boolean saveFile(JPanel panel, JTextArea textArea) {
+
+			if (file == null) {
 				return saveAsFile(panel, textArea);
 			}
-			
-			persist(panel, textArea);
+
+			persist();
 			return true;
 		}
 
-		public boolean saveAsFile(JPanel panel, JTextArea textArea)
-		{
+		public boolean saveAsFile(JPanel panel, JTextArea textArea) {
 			fileChooser.setDialogTitle("Save As");
 			int selection = fileChooser.showSaveDialog(panel);
 
-			if (selection == JFileChooser.APPROVE_OPTION)
-			{
+			if (selection == JFileChooser.APPROVE_OPTION) {
 				file = new File(fileChooser.getSelectedFile() + "." + FILTER.getExtensions()[0]); // TODO dynamically
-				
-				String fileName = fileChooser.getSelectedFile().getName();
-				String title = fileName.substring(0, fileName.indexOf("."));
-				
-				window.setTitle(title);
-				
-				// get extension
-				persist(panel, textArea);
+				windowProperties.setWindowTitle(fileChooser.getSelectedFile().getName());
+				window.setTitle(windowProperties.getWindowTitle()); // TODO dynamically update window (use observer
+																	// pattern?)
+
+				persist();
+				return true;
 			}
-			
-			return true;
+
+			return false;
 		}
 
-		private void persist(JPanel panel, JTextArea textArea)
-		{
-			try (PrintWriter pWriter = new PrintWriter(file))
-			{
-				pWriter.print(textArea.getText());
+		private void persist() {
 
-			} catch (IOException e)
-			{
-				JOptionPane.showMessageDialog(panel, "Error occurred, please check logs.", "ERROR",
+			if (windowProperties.isEncrypted()) {
+				persistEncrypted();
+				return;
+			}
+
+			try (PrintWriter pWriter = new PrintWriter(file)) {
+				pWriter.print(mainTextArea.getText());
+
+			} catch (FileNotFoundException e) {
+				JOptionPane.showMessageDialog(mainPanel, "Error occurred, please try again.", "ERROR",
 						JOptionPane.ERROR_MESSAGE);
 			}
 		}
-		
-		private void persistEncrypted(JPanel panel, JTextArea textArea)
-		{
-			
+
+		private void persistEncrypted() {
+			String cipherText = PasswordUtility.encryptText(mainTextArea.getText());
+
+			try (PrintWriter pWriter = new PrintWriter(file)) {
+				pWriter.print(cipherText);
+			} catch (FileNotFoundException e) {
+				JOptionPane.showMessageDialog(mainPanel, "Error occurred, please try again.", "ERROR",
+						JOptionPane.ERROR_MESSAGE);
+			}
 		}
 	}
 }
