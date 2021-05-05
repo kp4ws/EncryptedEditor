@@ -1,10 +1,16 @@
 package utility;
 
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Scanner;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.xml.bind.DatatypeConverter;
@@ -16,17 +22,12 @@ import javax.xml.bind.DatatypeConverter;
  */
 public class EncryptUtility
 {
-
 	private static final String AES = "AES";
-
-	// We are using a Block cipher(CBC mode)
 	private static final String AES_CIPHER_ALGORITHM = "AES/CBC/PKCS5PADDING";
-
-	private static Scanner message;
 
 	// Function to create a
 	// secret key
-	public static SecretKey createAESKey() throws Exception
+	public static SecretKey createAESKey() throws NoSuchAlgorithmException
 	{
 		SecureRandom securerandom = new SecureRandom();
 		KeyGenerator keygenerator = KeyGenerator.getInstance(AES);
@@ -70,8 +71,8 @@ public class EncryptUtility
 	// do_AESEncryption function.
 	// It converts ciphertext to
 	// the plaintext using the key.
-	public static String do_AESDecryption(byte[] cipherText, SecretKey secretKey, byte[] initializationVector)
-			throws Exception
+	public static String do_AESDecryption(byte[] cipherText, SecretKey secretKey, byte[] initializationVector) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException
+			
 	{
 		Cipher cipher = Cipher.getInstance(AES_CIPHER_ALGORITHM);
 
@@ -82,24 +83,5 @@ public class EncryptUtility
 		byte[] result = cipher.doFinal(cipherText);
 
 		return new String(result);
-	}
-	
-	// Driver code
-	public static void main(String args[]) throws Exception
-	{
-		String plainText = "This is the message " + "I want To Encrypt.";
-
-		// Encrypting the message
-		// using the symmetric key
-		byte[] cipherText = do_AESEncryption(plainText, Symmetrickey, initializationVector);
-
-		System.out.println(
-				"The ciphertext or " + "Encrypted Message is: " + DatatypeConverter.printHexBinary(cipherText));
-
-		// Decrypting the encrypted
-		// message
-		String decryptedText = do_AESDecryption(cipherText, Symmetrickey, initializationVector);
-
-		System.out.println("Your original message is: " + decryptedText);
 	}
 }
