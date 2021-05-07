@@ -1,5 +1,6 @@
 # EncryptedEditor
-A simple text editor program that allows the user to encrypt their messages.
+**A simple text editor program that allows the user to encrypt their messages.**
+![Screenshot 2021-05-07 114630](https://user-images.githubusercontent.com/58745400/117489055-5c7b3e00-af2a-11eb-86fe-86a8103508fc.png)
 
 ### Release Notes ###
 ---
