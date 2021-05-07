@@ -75,12 +75,6 @@ public final class GUIManager {
 
 	// Edit sub-menu components
 	private JMenu editMenu;
-	private JMenuItem undoItem;
-	private JMenuItem redoItem;
-	private JMenuItem cutItem;
-	private JMenuItem copyItem;
-	private JMenuItem pasteItem;
-	private JMenuItem deleteItem;
 	private JCheckBoxMenuItem encryptedMode;
 
 	// Help sub-menu components
@@ -104,8 +98,8 @@ public final class GUIManager {
 	private GUIManager() {
 
 		WindowModel model = new WindowModel();
-		mainWindow = new MainWindow(model, this);
 		windowProperties = model.getWindowProperties();
+		mainWindow = new MainWindow(model, this);
 		guiServices = new GUIServices();
 
 		buildMenuBar();
@@ -185,7 +179,8 @@ public final class GUIManager {
 							JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
 
 					if (option == 0) {
-						if (guiServices.saveAsFile()) {
+						//if (guiServices.saveAsFile()) 
+						{
 							guiServices.newFile();
 						}
 						return;
@@ -261,29 +256,6 @@ public final class GUIManager {
 	}
 
 	private void buildEditMenu() {
-		undoItem = new JMenuItem("Undo");
-		undoItem.setAccelerator(KeyStroke.getKeyStroke('Z', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-		undoItem.setFont(SUB_FONT);
-
-		redoItem = new JMenuItem("Redo");
-		redoItem.setAccelerator(KeyStroke.getKeyStroke('Y', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-		redoItem.setFont(SUB_FONT);
-
-		cutItem = new JMenuItem("Cut");
-		cutItem.setAccelerator(KeyStroke.getKeyStroke('X', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-		cutItem.setFont(SUB_FONT);
-
-		copyItem = new JMenuItem("Copy");
-		copyItem.setAccelerator(KeyStroke.getKeyStroke('C', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-		copyItem.setFont(SUB_FONT);
-
-		pasteItem = new JMenuItem("Paste");
-		pasteItem.setAccelerator(KeyStroke.getKeyStroke('V', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-		pasteItem.setFont(SUB_FONT);
-
-		deleteItem = new JMenuItem("Delete");
-		deleteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
-		deleteItem.setFont(SUB_FONT);
 
 		encryptedMode = new JCheckBoxMenuItem("Encrypted Mode");
 		encryptedMode.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
@@ -299,17 +271,6 @@ public final class GUIManager {
 
 		editMenu = new JMenu("Edit");
 		editMenu.setFont(MAIN_FONT);
-
-		editMenu.add(undoItem);
-		editMenu.add(redoItem);
-		editMenu.add(new JSeparator());
-
-		editMenu.add(cutItem);
-		editMenu.add(copyItem);
-		editMenu.add(pasteItem);
-		editMenu.add(deleteItem);
-		editMenu.add(new JSeparator());
-
 		editMenu.add(encryptedMode);
 	}
 
@@ -342,22 +303,19 @@ public final class GUIManager {
 				"enc");
 		private JFileChooser fileChooser;
 		private File file;
-		private byte[] initializationVector;
 
 		public GUIServices() {
 			fileChooser = new JFileChooser();
 			fileChooser.setCurrentDirectory(DEFAULT_DIRECTORY);
 			fileChooser.addChoosableFileFilter(TXT_FILTER);
 			fileChooser.addChoosableFileFilter(ENC_FILTER);
-			initializationVector = EncryptUtility.createInitializationVector();
 		}
 
-		public boolean newFile() {
+		public void newFile() {
 			windowProperties.reset();
-			return true;
 		}
 
-		public boolean openFile() {
+		public void openFile() {
 			fileChooser.setDialogTitle("Open");
 			int selection = fileChooser.showOpenDialog(mainPanel);
 
@@ -367,75 +325,63 @@ public final class GUIManager {
 				try (Scanner fileReader = new Scanner(file)) {
 					String fileData = "";
 					while (fileReader.hasNext()) {
-						fileData += fileReader.nextLine() + "\n";
+						fileData += fileReader.nextLine();
 					}
 
 					if (file.getName().contains(".enc")) {
-						if (openEncrypted(fileData)) {
-							windowProperties.setTitle(fileChooser.getSelectedFile().getName());
-						}
+						openEncrypted(fileData);
 					} else {
 						mainTextArea.setText(fileData);
-						windowProperties.setTitle(fileChooser.getSelectedFile().getName());
-						return true;
 					}
+					windowProperties.setTitle(fileChooser.getSelectedFile().getName());
 
 				} catch (FileNotFoundException e) {
 					displayGenericError();
 				}
 
 			}
-
-			return false;
 		}
 
-		private boolean openEncrypted(String fileData) {
-			String input = JOptionPane.showInputDialog("Enter the secret key: ");
-			if (input != null && !input.equals("")) {
-				byte[] cipherText = fileData.getBytes();
-				// decode the base64 encoded string
-				byte[] decodedKey = Base64.getDecoder().decode(input);
-				// rebuild key using SecretKeySpec
-				SecretKey secretKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES"); // AES/CBC/PKCS5PADDING
+		private void openEncrypted(String fileData) {
 
-				try {
-					mainTextArea.setText(EncryptUtility.do_AESDecryption(cipherText, secretKey, initializationVector));
-					return true;
-				} catch (Exception e) {
-					e.printStackTrace();
-					displayGenericError();
+			try {
+				String key = JOptionPane.showInputDialog("Enter the secret key: ");
+
+				if (key != null && !key.equals("")) {
+					String plainText = "";
+					plainText = EncryptUtility.decryptMessage(Integer.parseInt(key), fileData);
+					mainTextArea.setText(plainText);
 				}
+
+			} catch (NumberFormatException e) {
+				displayGenericError();
 			}
-			return false;
+
 		}
 
-		public boolean saveFile() {
+		public void saveFile() {
 
 			if (file == null) {
-				return saveAsFile();
+				saveAsFile();
 			}
 
 			persist();
-			return true;
 		}
 
-		public boolean saveAsFile() {
+		public void saveAsFile() {
 			fileChooser.setDialogTitle("Save As");
 			int selection = fileChooser.showSaveDialog(mainPanel);
 
 			if (selection == JFileChooser.APPROVE_OPTION) {
 				persist();
 				windowProperties.setTitle(fileChooser.getSelectedFile().getName());
-
-				return true;
 			}
-
-			return false;
 		}
 
 		private void persist() {
 
 			if (windowProperties.isEncrypted()) {
+				file = new File(fileChooser.getSelectedFile() + ".enc");
 				persistEncrypted();
 				return;
 			}
@@ -452,24 +398,17 @@ public final class GUIManager {
 		}
 
 		private void persistEncrypted() {
-			file = new File(fileChooser.getSelectedFile() + ".enc");
 
 			try (PrintWriter pWriter = new PrintWriter(file)) {
-				SecretKey secretKey = EncryptUtility.createAESKey();
-				String keyReadable = Base64.getEncoder().encodeToString(secretKey.getEncoded());
+				String key = JOptionPane.showInputDialog("Enter the secret key: ");
+				if (key != null && !key.equals("")) {
+					String cipherText = EncryptUtility.encryptMessage(Integer.parseInt(key), mainTextArea.getText());
+					pWriter.print(cipherText);
+				}
 
-				JTextArea result = new JTextArea(
-						"Secret Key: " + keyReadable + "\nYou'll be asked for this key when you open the file");
-				result.setEditable(false);
-
-				JOptionPane.showMessageDialog(mainPanel, new JScrollPane(result), "RESULT",
-						JOptionPane.INFORMATION_MESSAGE);
-
-				byte[] cipherText = EncryptUtility.do_AESEncryption(mainTextArea.getText(), secretKey,
-						initializationVector);
-				pWriter.print(cipherText);
-
-			} catch (Exception e) {
+			} catch (FileNotFoundException e) {
+				displayGenericError();
+			} catch (NumberFormatException e) {
 				displayGenericError();
 			}
 		}

@@ -9,13 +9,13 @@ import problemdomain.WindowModel;
 import problemdomain.WindowModel.WindowProperties;
 
 /**
- * Main window of the application.
+ * Main window of the application and acts as an Observer. Adheres to the
+ * Observer Pattern.
  * 
  * @author kentp
  * @version 1.1
  */
-public class MainWindow extends JFrame implements PropertyChangeListener
-{
+public final class MainWindow extends JFrame implements PropertyChangeListener {
 	private static final long serialVersionUID = 1L;
 	private final int WINDOW_WIDTH = 800;
 	private final int WINDOW_HEIGHT = 600;
@@ -27,8 +27,7 @@ public class MainWindow extends JFrame implements PropertyChangeListener
 	WindowProperties properties;
 	GUIManager manager;
 
-	public MainWindow(WindowModel model, GUIManager manager)
-	{
+	public MainWindow(WindowModel model, GUIManager manager) {
 		model.addChangeListener(this);
 		this.manager = manager;
 		this.properties = model.getWindowProperties();
@@ -39,18 +38,15 @@ public class MainWindow extends JFrame implements PropertyChangeListener
 		setLocationRelativeTo(null);
 	}
 
-	public void display()
-	{
+	public void display() {
 		setVisible(true);
 	}
 
 	@Override
-	public void propertyChange(PropertyChangeEvent evt)
-	{
+	public void propertyChange(PropertyChangeEvent evt) {
 		String event = evt.getPropertyName();
 
-		switch (event)
-		{
+		switch (event) {
 		case TITLE:
 			setTitle(evt.getNewValue().toString() + WINDOW_EXTENSION);
 			break;

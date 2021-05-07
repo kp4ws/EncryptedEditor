@@ -1,87 +1,75 @@
 package utility;
 
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.util.Random;
 import java.util.Scanner;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.IvParameterSpec;
-import javax.xml.bind.DatatypeConverter;
-
 /**
+ * Utility class using a custom built algorithm to encrypt and decrypt messages.
  * 
  * @author kentp
  * @version 1.1
  */
-public class EncryptUtility
-{
-	private static final String AES = "AES";
-	private static final String AES_CIPHER_ALGORITHM = "AES/CBC/PKCS5PADDING";
+public final class EncryptUtility {
 
-	// Function to create a
-	// secret key
-	public static SecretKey createAESKey() throws NoSuchAlgorithmException
-	{
-		SecureRandom securerandom = new SecureRandom();
-		KeyGenerator keygenerator = KeyGenerator.getInstance(AES);
+	private static final String VALID_CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+	private static final char NEW_LINE = '%';
+	private static final char TAB = '$';
 
-		keygenerator.init(256, securerandom);
-		SecretKey key = keygenerator.generateKey();
+	public static String encryptMessage(int key, String message) {
 
-		return key;
+		// Convert \n to %
+		String plainText = message.replaceAll("\n", Character.toString(NEW_LINE));
+		// Convert \t to $
+		plainText = message.replaceAll("\t", Character.toString(TAB));
+
+		String cipherText = "";
+		Random rand = new Random();
+
+		int amount = 0;
+		while (amount < plainText.length()) {
+			int randNum = rand.nextInt(VALID_CHARACTERS.length());
+			String randomString = "";
+
+			for (int i = 0; i < VALID_CHARACTERS.length(); i++) {
+
+				if (randNum % key == 0 && i == randNum) {
+					randomString += plainText.charAt(amount++);
+				} else {
+					randomString += VALID_CHARACTERS.charAt(rand.nextInt(VALID_CHARACTERS.length()));
+				}
+			}
+
+			cipherText += String.format("%d\t%s%n", randNum, randomString);
+		}
+
+		return cipherText;
 	}
 
-	// Function to initialize a vector
-	// with an arbitrary value
-	public static byte[] createInitializationVector()
-	{
+	public static String decryptMessage(int key, String cipherText) {
 
-		// Used with encryption
-		byte[] initializationVector = new byte[16];
-		SecureRandom secureRandom = new SecureRandom();
-		secureRandom.nextBytes(initializationVector);
-		return initializationVector;
-	}
+		String plainText = "";
+		Scanner textReader = new Scanner(cipherText);
 
-	// This function takes plaintext,
-	// the key with an initialization
-	// vector to convert plainText
-	// into CipherText.
-	public static byte[] do_AESEncryption(String plainText, SecretKey secretKey, byte[] initializationVector)
-			throws Exception
-	{
-		Cipher cipher = Cipher.getInstance(AES_CIPHER_ALGORITHM);
-
-		IvParameterSpec ivParameterSpec = new IvParameterSpec(initializationVector);
-
-		cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec);
-
-		return cipher.doFinal(plainText.getBytes());
-	}
-
-	// This function performs the
-	// reverse operation of the
-	// do_AESEncryption function.
-	// It converts ciphertext to
-	// the plaintext using the key.
-	public static String do_AESDecryption(byte[] cipherText, SecretKey secretKey, byte[] initializationVector) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException
+		while (textReader.hasNext()) {
+			int randNum = textReader.nextInt();
+			String randomString = textReader.nextLine();
 			
-	{
-		Cipher cipher = Cipher.getInstance(AES_CIPHER_ALGORITHM);
+			if (randNum % key == 0) {
 
-		IvParameterSpec ivParameterSpec = new IvParameterSpec(initializationVector);
+				if (randomString.charAt(randNum + 1) == NEW_LINE) {
+					plainText += "\n";
+				} else if (randomString.charAt(randNum + 1) == TAB) {
+					plainText += "\t";
+				} else {
+					plainText += randomString.charAt(randNum);
+				}
+			}
+		}
+		textReader.close();
+		return plainText;
 
-		cipher.init(Cipher.DECRYPT_MODE, secretKey, ivParameterSpec);
-
-		byte[] result = cipher.doFinal(cipherText);
-
-		return new String(result);
 	}
 }
