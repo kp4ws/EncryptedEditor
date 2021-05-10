@@ -22,6 +22,7 @@ public final class MainWindow extends JFrame implements PropertyChangeListener {
 	private final String WINDOW_EXTENSION = " - Encrypted Editor";
 	private final String MODE = "mode";
 	private final String TITLE = "title";
+	private final String TEXT = "text";
 	private final String RESET = "reset";
 
 	WindowProperties properties;
@@ -61,6 +62,10 @@ public final class MainWindow extends JFrame implements PropertyChangeListener {
 			manager.getTextArea().setText("");
 			break;
 
+		case TEXT:
+			setTitle("*" + properties.getTitle() + WINDOW_EXTENSION);
+			break;
+			
 		default:
 			break;
 		}
