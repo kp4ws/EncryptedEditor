@@ -19,3 +19,4 @@
 
 #### v1.1 - 2020-05-7 ####
 - Refactored code
+- Improved application functionality
