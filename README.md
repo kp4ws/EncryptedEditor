@@ -1,6 +1,6 @@
 # EncryptedEditor
 
-#### A simple text editor program that allows the user to encrypt their messages. ####
+#### A simple text editor that allows the user to encrypt their messages. ####
 
 ---
 
